@@ -1,0 +1,96 @@
+{
+  "name": "pointagepro",
+  "version": "1.0.0",
+  "description": "Application de pointage intelligent par QR Code — Offline First PWA",
+  "main": "main.js",
+  "scripts": {
+    "start": "npx electron .",
+    "dev": "npx electron . --inspect",
+    "kill": "powershell -Command \"Get-Process -Name 'PointagePro','electron' -ErrorAction SilentlyContinue | Stop-Process -Force\"",
+    "clean": "powershell -Command \"if (Test-Path dist) { Remove-Item -Recurse -Force dist }\"",
+    "prebuild": "npm run kill && npm run clean",
+    "build:win": "electron-builder --win --x64",
+    "build:dir": "electron-builder --win --dir"
+  },
+  "build": {
+    "appId": "com.pointagepro.app",
+    "productName": "PointagePro",
+    "copyright": "Copyright © 2026 PointagePro Team",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/electron-log/**/*"
+    ],
+    "files": [
+      "**/*",
+      "!**/*.md",
+      "!**/*.map",
+      "!**/*.log",
+      "!.git/**",
+      "!.gitignore",
+      "!*.csv",
+      "!*.xls",
+      "!*.xlsx",
+      "!dist/**",
+      "!node_modules/.cache/**",
+      "!node_modules/electron/**",
+      "!node_modules/electron-builder/**"
+    ],
+    "extraResources": [],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "requestedExecutionLevel": "asInvoker",
+      "publisherName": "PointagePro Team"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "PointagePro",
+      "deleteAppDataOnUninstall": false,
+      "perMachine": false,
+      "runAfterFinish": true
+    },
+    "directories": {
+      "buildResources": ".",
+      "output": "dist"
+    },
+    "compression": "maximum",
+    "removePackageScripts": true
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^8.4.0",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "keywords": [
+    "pointage",
+    "qrcode",
+    "pwa",
+    "offline",
+    "rh",
+    "presence"
+  ],
+  "author": "PointagePro Team",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/android": "^8.4.0",
+    "@capacitor/barcode-scanner": "^3.0.2",
+    "@capacitor/camera": "^8.2.0",
+    "@capacitor/core": "^8.4.0",
+    "dexie": "^4.4.3"
+  }
+}

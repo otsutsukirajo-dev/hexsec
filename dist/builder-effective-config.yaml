@@ -1,0 +1,47 @@
+directories:
+  output: dist
+  buildResources: .
+appId: com.pointagepro.app
+productName: PointagePro
+copyright: Copyright © 2026 PointagePro Team
+asar: true
+asarUnpack:
+  - node_modules/electron-log/**/*
+files:
+  - filter:
+      - '**/*'
+      - '!**/*.md'
+      - '!**/*.map'
+      - '!**/*.log'
+      - '!.git/**'
+      - '!.gitignore'
+      - '!*.csv'
+      - '!*.xls'
+      - '!*.xlsx'
+      - '!dist/**'
+      - '!node_modules/.cache/**'
+      - '!node_modules/electron/**'
+      - '!node_modules/electron-builder/**'
+extraResources: []
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: portable
+      arch:
+        - x64
+  requestedExecutionLevel: asInvoker
+  publisherName: PointagePro Team
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: PointagePro
+  deleteAppDataOnUninstall: false
+  perMachine: false
+  runAfterFinish: true
+compression: maximum
+removePackageScripts: true
+electronVersion: 28.3.3
