@@ -1528,25 +1528,59 @@
       color: var(--text-2);
     }
 
-    /* Styles pour scanner natif Capacitor */
-    body.barcode-scanner-active, 
-    body.barcode-scanner-active .app-layout, 
-    body.barcode-scanner-active .main-content, 
-    body.barcode-scanner-active .page, 
+    /* ═══════════════════════════════════════════════════════════════════
+       SCANNER NATIF CAPACITOR — RÈGLES DE TRANSPARENCE ABSOLUE
+       Quand .barcode-scanner-active est sur le body, la WebView
+       devient un calque transparent parfait pour laisser passer le
+       flux vidéo matériel en temps réel du plugin natif Capacitor.
+    ═══════════════════════════════════════════════════════════════════ */
+
+    /* — Couches conteneurs : alpha-channel à zéro — */
+    body.barcode-scanner-active,
+    body.barcode-scanner-active .app-layout,
+    body.barcode-scanner-active .main-content,
+    body.barcode-scanner-active .page,
+    body.barcode-scanner-active .page-body,
     body.barcode-scanner-active .scanner-box {
         background: transparent !important;
+        background-color: transparent !important;
     }
 
+    /* — Éléments d'infrastructure : masquage immédiat — */
     body.barcode-scanner-active .sidebar,
     body.barcode-scanner-active .topbar,
     body.barcode-scanner-active .bottom-nav,
     body.barcode-scanner-active #offlineBanner,
-    body.barcode-scanner-active .page-header {
+    body.barcode-scanner-active .offline-banner,
+    body.barcode-scanner-active .page-header,
+    body.barcode-scanner-active #scannerDescText {
       display: none !important;
     }
 
-    body.barcode-scanner-active .scanner-box .scanner-icon {
+    /* — Icône statique centrale : masquée pour ne pas obstruer la caméra — */
+    body.barcode-scanner-active .scanner-box .scanner-icon,
+    body.barcode-scanner-active .scanner-icon {
+      display: none !important;
       opacity: 0 !important;
+    }
+
+    /* — Bouton Stop : flottant visible au-dessus de la caméra — */
+    body.barcode-scanner-active #stopScanBtn {
+      display: inline-flex !important;
+      position: fixed !important;
+      bottom: 40px !important;
+      left: 50% !important;
+      transform: translateX(-50%) !important;
+      z-index: 9999 !important;
+      background: rgba(239,68,68,0.9) !important;
+      color: #fff !important;
+      border: none !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+    }
+
+    /* — Bouton Scan : masqué pendant le scan — */
+    body.barcode-scanner-active #scanBtn {
+      display: none !important;
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -1717,7 +1751,7 @@
       <div class="page active" id="page-accueil">
         <div class="page-header">
           <div>
-            <div class="page-title" id="greetTitle">Bonjour, Jean 👋</div>
+            <div class="page-title" id="greetTitle">Bonjour 👋</div>
             <div class="page-subtitle" id="greetDate">Jeudi 28 Mai 2026 — Mode Employé</div>
           </div>
         </div>
@@ -1788,50 +1822,52 @@
         </div>
       </div>
 
-      <!-- ─── SCANNER ─── -->
-      <div class="page" id="page-scanner">
-        <div class="page-header">
-          <div>
-            <div class="page-title">Scanner le QR Code</div>
-            <div class="page-subtitle">Pointez la caméra sur le QR Code affiché à l'entrée</div>
-          </div>
+<!-- ─── SCANNER ─── -->
+<div class="page" id="page-scanner">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Scanner le QR Code</div>
+      <div class="page-subtitle">Pointez la caméra sur le QR Code affiché à l'entrée</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="scanner-wrap">
+
+      <div class="scanner-section" style="text-align: center; margin: 20px 0;">
+
+        <!-- Conteneur pour Html5QrCode (fallback) -->
+        <!-- IMPORTANT : Conteneur pour la caméra (Html5Qrcode) -->
+        <div id="reader" style="display:none; width:100%; max-width:320px; margin:20px auto; border:3px solid var(--green); border-radius:12px; overflow:hidden;"></div>
+        <!-- Boîte visuelle (visible par défaut) -->
+        <div id="scannerBox" class="scanner-box" style="margin: 0 auto 15px;">
+          <div class="scanner-corner tl"></div>
+          <div class="scanner-corner tr"></div>
+          <div class="scanner-corner bl"></div>
+          <div class="scanner-corner br"></div>
+          <div class="scanner-line"></div>
+          <i class="fas fa-qrcode scanner-icon"></i>
         </div>
-        <div class="page-body">
-          <div class="scanner-wrap">
 
-            <div class="scanner-section" style="text-align: center; margin: 20px 0;">
+        <p id="statut-texte" style="color: #94a3b8; margin: 10px 0;">Prêt à scanner</p>
 
-              <!-- Boîte d'animation scanner (visible par défaut) -->
-              <div id="scannerBox" class="scanner-box" style="margin: 0 auto 15px;">
-                <div class="scanner-corner tl"></div>
-                <div class="scanner-corner tr"></div>
-                <div class="scanner-corner bl"></div>
-                <div class="scanner-corner br"></div>
-                <div class="scanner-line"></div>
-                <i class="fas fa-qrcode scanner-icon"></i>
-              </div>
+        <button id="scanBtn" onclick="startQRScanner()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+          <i class="fas fa-camera"></i> Activer caméra
+        </button>
+        <button id="stopScanBtn" onclick="stopQRScanner()" class="btn btn-danger" style="display: none; align-items: center; gap: 8px;">
+          <i class="fas fa-stop"></i> Arrêter
+        </button>
 
-              <p id="statut-texte" style="color: #94a3b8; margin: 10px 0;">Prêt à scanner</p>
-
-              <button id="scanBtn" onclick="startQRScanner()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
-                <i class="fas fa-camera"></i> Activer caméra
-              </button>
-              <button id="stopScanBtn" onclick="stopQRScanner()" class="btn btn-danger" style="display: none; align-items: center; gap: 8px;">
-                <i class="fas fa-stop"></i> Arrêter
-              </button>
-
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;margin-top:16px;">
-              <button class="btn btn-outline btn-block" onclick="simulateScanOffline()">
-                <i class="fas fa-wifi-slash"></i> Simuler mode Hors-ligne (Demo)
-              </button>
-            </div>
-
-          </div>
-        </div>
       </div>
-      <!-- ─── HISTORIQUE EMPLOYÉ ─── -->
+
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;margin-top:16px;">
+        <button class="btn btn-outline btn-block" onclick="simulateScanOffline()">
+          <i class="fas fa-wifi-slash"></i> Simuler mode Hors-ligne (Demo)
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>      <!-- ─── HISTORIQUE EMPLOYÉ ─── -->
       <div class="page" id="page-historique">
         <div class="page-header">
           <div>
@@ -1887,44 +1923,41 @@
         <div class="page-header">
           <div>
             <div class="page-title">Tableau de bord RH</div>
-            <div class="page-subtitle">Vue d'ensemble des présences — Mai 2026</div>
+            <div class="page-subtitle">Vue d'ensemble des présences — <span id="currentMonthYear">Mai 2026</span></div>
           </div>
-          <div class="page-actions">
-            <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
-            <button class="btn btn-primary btn-sm" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Exporter
-              Excel</button>
+          <div class="page-actions" style="display:flex; gap:8px;">
+            <button id="btn-rafraichir" class="btn btn-outline btn-sm" onclick="chargerTableauDeBord()">
+              <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">
+              <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="exportExcel()">
+              <i class="fas fa-file-excel"></i> Exporter Excel
+            </button>
           </div>
         </div>
         <div class="page-body">
-
-          <!-- Zone exclusive Employeur (id="managerControlZone") -->
-          <div id="managerControlZone"
-            style="margin-bottom: 24px; display: flex; justify-content: center; width: 100%;">
+          <!-- Zone exclusive Employeur -->
+          <div id="managerControlZone" style="margin-bottom: 24px; display: flex; justify-content: center; width: 100%;">
             <div class="card" style="width: 100%; max-width: 520px;">
-              <div class="card-body"
-                style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px;">
-                <div
-                  style="width:52px;height:52px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--green-dark)">
+              <div class="card-body" style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px;">
+                <div style="width:52px;height:52px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--green-dark)">
                   <i class="fas fa-qrcode"></i>
                 </div>
                 <div style="font-weight:700;font-size:16px;margin-bottom:4px">QR Code de Pointage Dynamique</div>
                 <div style="font-size:13px;color:var(--text-2);max-width:320px;line-height:1.5;">
                   Affichez ce QR Code à l'entrée. Les employés doivent le scanner pour pointer leur présence.
                 </div>
-                <div id="qrcodeContainer"
-                  style="padding:16px; background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg); display:inline-block; margin:8px 0;">
-                </div>
-                <div
-                  style="font-family:var(--font-mono); font-size:11px; color:var(--text-2); background:var(--bg); padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); word-break:break-all;"
-                  id="qrcodeTokenLabel">
+                <div id="qrcodeContainer" style="padding:16px; background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg); display:inline-block; margin:8px 0;"></div>
+                <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-2); background:var(--bg); padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); word-break:break-all;" id="qrcodeTokenLabel">
                   Aucun jeton généré
                 </div>
                 <div style="display:flex; gap:12px; width:100%; max-width:320px; margin-top:8px;">
                   <button class="btn btn-primary" onclick="genererCodePointage()" style="flex:1;">
                     <i class="fas fa-sync-alt"></i> Actualiser le QR
                   </button>
-                  <button class="btn btn-outline" onclick="telechargerQRCode()" title="Télécharger le QR Code"
-                    style="padding:10px 14px;">
+                  <button class="btn btn-outline" onclick="telechargerQRCode()" title="Télécharger le QR Code" style="padding:10px 14px;">
                     <i class="fas fa-download"></i> Télécharger
                   </button>
                 </div>
@@ -1981,6 +2014,12 @@
           </div>
 
           <div class="tab-panel" id="tab-pointages">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="font-size: 16px; font-weight: 700;">Pointages du jour</h3>
+              <button id="btn-rafraichir-pointages" class="btn btn-outline btn-sm" onclick="renderTodayTable()">
+                <i class="fas fa-sync-alt"></i> Actualiser
+              </button>
+            </div>
             <div class="table-wrapper">
               <table>
                 <thead>
@@ -2370,8 +2409,18 @@
 
     function doLoginUser(u) {
       currentUser = u;
+      // Persister la sélection de l'utilisateur courant pour que `app.js` puisse la récupérer
+      try { localStorage.setItem('POINTAGEPRO_CURRENT_USER', u.id); } catch (e) {}
       myPointages = ALL_POINTAGES.filter(p => p.employeeId === currentUser.id);
       pendingPointages = JSON.parse(localStorage.getItem('POINTAGEPRO_PENDING')) || [];
+
+      // Mettre à jour currentUser dans app.js (si chargé)
+      try {
+        if (typeof window !== 'undefined' && window.currentUser !== undefined) {
+          window.currentUser = u;
+          window.myPointages = ALL_POINTAGES.filter(p => p.employeeId === u.id);
+        }
+      } catch (e) {}
 
       document.getElementById('loginPage').style.display = 'none';
       document.getElementById('appRoot').style.display = 'flex';
@@ -2381,6 +2430,7 @@
     function doLogout() {
       currentUser = null;
       myPointages = [];
+      try { localStorage.removeItem('POINTAGEPRO_CURRENT_USER'); } catch (e) {}
       document.getElementById('appRoot').style.display = 'none';
       document.getElementById('loginPage').style.display = 'flex';
     }
@@ -3174,10 +3224,10 @@
       );
     }
   </script>
-  <script src="dexie.min.js"></script>
-  <script src="qrcode.min.js"></script> 
-  
-  <script src="app.js"></script>
+<script src="dexie.min.js"></script>
+<script src="qrcode.min.js"></script>
+<script src="html5-qrcode.min.js"></script>
+<script src="app.js"></script>
 </body>
 
 </html>
