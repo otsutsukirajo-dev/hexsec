@@ -1529,61 +1529,42 @@
     }
 
     /* ═══════════════════════════════════════════════════════════════════
-       SCANNER NATIF CAPACITOR — RÈGLES DE TRANSPARENCE
-       Quand .barcode-scanner-active est sur le <body>, la WebView
-       devient transparente pour laisser la caméra native apparaître
-       en arrière-plan (comportement officiel Capacitor BarcodeScanner).
+       SCANNER NATIF CAPACITOR — RÈGLES DE TRANSPARENCE ABSOLUE
+       Quand .barcode-scanner-active est sur le body, la WebView
+       devient un calque transparent parfait pour laisser passer le
+       flux vidéo matériel en temps réel du plugin natif Capacitor.
     ═══════════════════════════════════════════════════════════════════ */
-    body.barcode-scanner-active {
-      background: transparent !important;
+
+    /* — Couches conteneurs : alpha-channel à zéro — */
+    body.barcode-scanner-active,
+    body.barcode-scanner-active .app-layout,
+    body.barcode-scanner-active .main-content,
+    body.barcode-scanner-active .page,
+    body.barcode-scanner-active .page-body,
+    body.barcode-scanner-active .scanner-box {
+        background: transparent !important;
+        background-color: transparent !important;
     }
-    body.barcode-scanner-active html,
-    html:has(body.barcode-scanner-active) {
-      background: transparent !important;
-    }
-    body.barcode-scanner-active .app-layout {
-      background: transparent !important;
-    }
-    body.barcode-scanner-active .main-content {
-      background: transparent !important;
-    }
-    body.barcode-scanner-active .page {
-      background: transparent !important;
-    }
-    body.barcode-scanner-active .page-body {
-      background: transparent !important;
-    }
-    /* Masquer tous les éléments d'interface superflus pendant le scan */
-    body.barcode-scanner-active .sidebar {
-      display: none !important;
-    }
-    body.barcode-scanner-active .topbar {
-      display: none !important;
-    }
-    body.barcode-scanner-active .bottom-nav {
-      display: none !important;
-    }
-    body.barcode-scanner-active .offline-banner {
-      display: none !important;
-    }
-    body.barcode-scanner-active .page-header {
-      display: none !important;
-    }
+
+    /* — Éléments d'infrastructure : masquage immédiat — */
+    body.barcode-scanner-active .sidebar,
+    body.barcode-scanner-active .topbar,
+    body.barcode-scanner-active .bottom-nav,
+    body.barcode-scanner-active #offlineBanner,
+    body.barcode-scanner-active .offline-banner,
+    body.barcode-scanner-active .page-header,
     body.barcode-scanner-active #scannerDescText {
       display: none !important;
     }
-    body.barcode-scanner-active #scanBtn {
-      display: none !important;
-    }
-    /* La scanner-box reste visible (viseur) mais fond transparent */
-    body.barcode-scanner-active .scanner-box {
-      background: transparent !important;
-    }
-    /* L'icône centrale doit disparaître pour ne pas cacher la caméra */
+
+    /* — Icône statique centrale : masquée pour ne pas obstruer la caméra — */
+    body.barcode-scanner-active .scanner-box .scanner-icon,
     body.barcode-scanner-active .scanner-icon {
       display: none !important;
+      opacity: 0 !important;
     }
-    /* Le bouton Stop reste visible au-dessus de la caméra */
+
+    /* — Bouton Stop : flottant visible au-dessus de la caméra — */
     body.barcode-scanner-active #stopScanBtn {
       display: inline-flex !important;
       position: fixed !important;
@@ -1596,27 +1577,15 @@
       border: none !important;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
     }
-    /* Label statut scanner actif */
-    body.barcode-scanner-active #scannerActiveLabel {
-      display: flex !important;
-      position: fixed !important;
-      top: 32px !important;
-      left: 50% !important;
-      transform: translateX(-50%) !important;
-      z-index: 9999 !important;
-      background: rgba(16,185,129,0.9) !important;
-      color: #fff !important;
-      padding: 8px 20px !important;
-      border-radius: 20px !important;
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      white-space: nowrap !important;
+
+    /* — Bouton Scan : masqué pendant le scan — */
+    body.barcode-scanner-active #scanBtn {
+      display: none !important;
     }
   </style>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
   <!-- ✅ Bibliothèque QR Code locale — fonctionne 100% hors-ligne et sous Electron -->
   <script src="qrcode.min.js"></script>
-  <!-- ❌ html5-qrcode.min.js RETIRÉ — remplacé par le plugin natif Capacitor BarcodeScanner -->
 </head>
 
 <body>
@@ -1782,7 +1751,7 @@
       <div class="page active" id="page-accueil">
         <div class="page-header">
           <div>
-            <div class="page-title" id="greetTitle">Bonjour, Jean 👋</div>
+            <div class="page-title" id="greetTitle">Bonjour 👋</div>
             <div class="page-subtitle" id="greetDate">Jeudi 28 Mai 2026 — Mode Employé</div>
           </div>
         </div>
@@ -1853,57 +1822,52 @@
         </div>
       </div>
 
-      <!-- ─── SCANNER ─── -->
-      <div class="page" id="page-scanner">
-        <div class="page-header">
-          <div>
-            <div class="page-title">Scanner le QR Code</div>
-            <div class="page-subtitle">Pointez la caméra sur le QR Code affiché à l'entrée</div>
-          </div>
+<!-- ─── SCANNER ─── -->
+<div class="page" id="page-scanner">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Scanner le QR Code</div>
+      <div class="page-subtitle">Pointez la caméra sur le QR Code affiché à l'entrée</div>
+    </div>
+  </div>
+  <div class="page-body">
+    <div class="scanner-wrap">
+
+      <div class="scanner-section" style="text-align: center; margin: 20px 0;">
+
+        <!-- Conteneur pour Html5QrCode (fallback) -->
+        <!-- IMPORTANT : Conteneur pour la caméra (Html5Qrcode) -->
+        <div id="reader" style="display:none; width:100%; max-width:320px; margin:20px auto; border:3px solid var(--green); border-radius:12px; overflow:hidden;"></div>
+        <!-- Boîte visuelle (visible par défaut) -->
+        <div id="scannerBox" class="scanner-box" style="margin: 0 auto 15px;">
+          <div class="scanner-corner tl"></div>
+          <div class="scanner-corner tr"></div>
+          <div class="scanner-corner bl"></div>
+          <div class="scanner-corner br"></div>
+          <div class="scanner-line"></div>
+          <i class="fas fa-qrcode scanner-icon"></i>
         </div>
-        <div class="page-body">
-          <div class="scanner-wrap">
 
-            <!-- Label visible pendant le scan natif Capacitor -->
-            <div id="scannerActiveLabel"
-              style="display:none;align-items:center;gap:8px;">
-              <i class="fas fa-circle" style="color:#10b981;animation:pulse 1s infinite"></i>
-              Scanner actif — Alignez le QR Code
-            </div>
+        <p id="statut-texte" style="color: #94a3b8; margin: 10px 0;">Prêt à scanner</p>
 
-            <!-- Boîte de visée — fond transparent quand .barcode-scanner-active est actif -->
-            <div class="scanner-box" id="scannerBox">
-              <div class="scanner-corner tl"></div>
-              <div class="scanner-corner tr"></div>
-              <div class="scanner-corner bl"></div>
-              <div class="scanner-corner br"></div>
-              <div class="scanner-line" id="scanLine"></div>
-              <i class="fas fa-qrcode scanner-icon qr-pulse"></i>
-            </div>
+        <button id="scanBtn" onclick="startQRScanner()" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 8px;">
+          <i class="fas fa-camera"></i> Activer caméra
+        </button>
+        <button id="stopScanBtn" onclick="stopQRScanner()" class="btn btn-danger" style="display: none; align-items: center; gap: 8px;">
+          <i class="fas fa-stop"></i> Arrêter
+        </button>
 
-            <div id="scannerDescText" style="text-align:center">
-              <div class="scanner-title">Prêt à scanner</div>
-              <p class="scanner-desc">Scannez le QR Code à l'entrée pour enregistrer votre présence automatiquement</p>
-              <div class="scanner-gps"><i class="fas fa-map-marker-alt"></i> La position GPS réelle ou simulée sera
-                enregistrée</div>
-            </div>
-
-            <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px">
-              <button class="btn btn-primary btn-lg btn-block" id="scanBtn" onclick="startQRScanner()">
-                <i class="fas fa-camera"></i> Activer la Caméra (Scan QR)
-              </button>
-              <button class="btn btn-danger btn-block" id="stopScanBtn" onclick="stopQRScanner()" style="display:none">
-                <i class="fas fa-times-circle"></i> Arrêter le Scanner
-              </button>
-              <button class="btn btn-outline btn-block" onclick="simulateScanOffline()">
-                <i class="fas fa-wifi-slash"></i> Simuler mode Hors-ligne (Demo)
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- ─── HISTORIQUE EMPLOYÉ ─── -->
+      <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px;margin-top:16px;">
+        <button class="btn btn-outline btn-block" onclick="simulateScanOffline()">
+          <i class="fas fa-wifi-slash"></i> Simuler mode Hors-ligne (Demo)
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>      <!-- ─── HISTORIQUE EMPLOYÉ ─── -->
       <div class="page" id="page-historique">
         <div class="page-header">
           <div>
@@ -1959,44 +1923,41 @@
         <div class="page-header">
           <div>
             <div class="page-title">Tableau de bord RH</div>
-            <div class="page-subtitle">Vue d'ensemble des présences — Mai 2026</div>
+            <div class="page-subtitle">Vue d'ensemble des présences — <span id="currentMonthYear">Mai 2026</span></div>
           </div>
-          <div class="page-actions">
-            <button class="btn btn-outline btn-sm" onclick="exportCSV()"><i class="fas fa-file-csv"></i> CSV</button>
-            <button class="btn btn-primary btn-sm" onclick="exportExcel()"><i class="fas fa-file-excel"></i> Exporter
-              Excel</button>
+          <div class="page-actions" style="display:flex; gap:8px;">
+            <button id="btn-rafraichir" class="btn btn-outline btn-sm" onclick="chargerTableauDeBord()">
+              <i class="fas fa-sync-alt"></i> Actualiser
+            </button>
+            <button class="btn btn-outline btn-sm" onclick="exportCSV()">
+              <i class="fas fa-file-csv"></i> CSV
+            </button>
+            <button class="btn btn-primary btn-sm" onclick="exportExcel()">
+              <i class="fas fa-file-excel"></i> Exporter Excel
+            </button>
           </div>
         </div>
         <div class="page-body">
-
-          <!-- Zone exclusive Employeur (id="managerControlZone") -->
-          <div id="managerControlZone"
-            style="margin-bottom: 24px; display: flex; justify-content: center; width: 100%;">
+          <!-- Zone exclusive Employeur -->
+          <div id="managerControlZone" style="margin-bottom: 24px; display: flex; justify-content: center; width: 100%;">
             <div class="card" style="width: 100%; max-width: 520px;">
-              <div class="card-body"
-                style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px;">
-                <div
-                  style="width:52px;height:52px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--green-dark)">
+              <div class="card-body" style="text-align:center; display:flex; flex-direction:column; align-items:center; gap:16px; padding:24px;">
+                <div style="width:52px;height:52px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;color:var(--green-dark)">
                   <i class="fas fa-qrcode"></i>
                 </div>
                 <div style="font-weight:700;font-size:16px;margin-bottom:4px">QR Code de Pointage Dynamique</div>
                 <div style="font-size:13px;color:var(--text-2);max-width:320px;line-height:1.5;">
                   Affichez ce QR Code à l'entrée. Les employés doivent le scanner pour pointer leur présence.
                 </div>
-                <div id="qrcodeContainer"
-                  style="padding:16px; background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg); display:inline-block; margin:8px 0;">
-                </div>
-                <div
-                  style="font-family:var(--font-mono); font-size:11px; color:var(--text-2); background:var(--bg); padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); word-break:break-all;"
-                  id="qrcodeTokenLabel">
+                <div id="qrcodeContainer" style="padding:16px; background:#fff; border:1.5px solid var(--border); border-radius:var(--radius-lg); display:inline-block; margin:8px 0;"></div>
+                <div style="font-family:var(--font-mono); font-size:11px; color:var(--text-2); background:var(--bg); padding:6px 12px; border-radius:var(--radius-sm); border:1px solid var(--border); word-break:break-all;" id="qrcodeTokenLabel">
                   Aucun jeton généré
                 </div>
                 <div style="display:flex; gap:12px; width:100%; max-width:320px; margin-top:8px;">
                   <button class="btn btn-primary" onclick="genererCodePointage()" style="flex:1;">
                     <i class="fas fa-sync-alt"></i> Actualiser le QR
                   </button>
-                  <button class="btn btn-outline" onclick="telechargerQRCode()" title="Télécharger le QR Code"
-                    style="padding:10px 14px;">
+                  <button class="btn btn-outline" onclick="telechargerQRCode()" title="Télécharger le QR Code" style="padding:10px 14px;">
                     <i class="fas fa-download"></i> Télécharger
                   </button>
                 </div>
@@ -2053,6 +2014,12 @@
           </div>
 
           <div class="tab-panel" id="tab-pointages">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <h3 style="font-size: 16px; font-weight: 700;">Pointages du jour</h3>
+              <button id="btn-rafraichir-pointages" class="btn btn-outline btn-sm" onclick="renderTodayTable()">
+                <i class="fas fa-sync-alt"></i> Actualiser
+              </button>
+            </div>
             <div class="table-wrapper">
               <table>
                 <thead>
@@ -2216,7 +2183,7 @@
     let myPointages = [];
     let darkMode = false;
     let qrInstance = null;
-    // html5QrCode RETIRÉ — remplacé par Capacitor.Plugins.BarcodeScanner natif
+    let html5QrCode = null;
 
     // ─── QR CODE GENERATOR ──────────────────────────────────────────
     /**
@@ -2442,8 +2409,18 @@
 
     function doLoginUser(u) {
       currentUser = u;
+      // Persister la sélection de l'utilisateur courant pour que `app.js` puisse la récupérer
+      try { localStorage.setItem('POINTAGEPRO_CURRENT_USER', u.id); } catch (e) {}
       myPointages = ALL_POINTAGES.filter(p => p.employeeId === currentUser.id);
       pendingPointages = JSON.parse(localStorage.getItem('POINTAGEPRO_PENDING')) || [];
+
+      // Mettre à jour currentUser dans app.js (si chargé)
+      try {
+        if (typeof window !== 'undefined' && window.currentUser !== undefined) {
+          window.currentUser = u;
+          window.myPointages = ALL_POINTAGES.filter(p => p.employeeId === u.id);
+        }
+      } catch (e) {}
 
       document.getElementById('loginPage').style.display = 'none';
       document.getElementById('appRoot').style.display = 'flex';
@@ -2453,6 +2430,7 @@
     function doLogout() {
       currentUser = null;
       myPointages = [];
+      try { localStorage.removeItem('POINTAGEPRO_CURRENT_USER'); } catch (e) {}
       document.getElementById('appRoot').style.display = 'none';
       document.getElementById('loginPage').style.display = 'flex';
     }
@@ -2565,11 +2543,174 @@
     }
 
     // ─── SCANNER & CAMERA ───────────────────────────────────────────
-    // ✅ startQRScanner() et stopQRScanner() sont désormais définis
-    // dans app.js et utilisent le plugin natif Capacitor BarcodeScanner.
-    // Les fonctions ci-dessous (html5QrCode / Html5Qrcode) ont été
-    // SUPPRIMÉES car elles causaient l'affichage d'une icône vidéo
-    // noire bloquante et des erreurs 'localStream'/'videoElement'.
+
+    // Timer pour le fallback automatique si la caméra ne démarre pas
+    let _cameraFallbackTimer = null;
+
+    function _showFallbackBtn() {
+      const existing = document.getElementById('fallbackDemoBtn');
+      if (existing) return; // déjà affiché
+
+      const container = document.querySelector('#page-scanner .scanner-wrap > div:last-child');
+      const btn = document.createElement('button');
+      btn.id = 'fallbackDemoBtn';
+      btn.className = 'btn btn-outline btn-block';
+      btn.style.cssText = 'border-color: var(--amber); color: #b45309; animation: pulse 2s infinite; margin-top: 4px;';
+      btn.innerHTML = '<i class="fas fa-magic"></i> Simuler le scan (Fallback Démo)';
+      btn.onclick = () => {
+        // Coordonnées Antananarivo, Madagascar
+        const lat = (18.8792 + (Math.random() - 0.5) * 0.02).toFixed(6);
+        const lon = (47.5079 + (Math.random() - 0.5) * 0.02).toFixed(6);
+        const gps = `${lat}° S, ${lon}° E (Antananarivo — Simulé)`;
+        stopQRScanner();
+        btn.remove();
+        showToast('Mode démo', 'Scan simulé avec coordonnées Antananarivo', 'amber', 'fa-map-marker-alt');
+        saveRealPointage(gps, !navigator.onLine);
+      };
+      if (container) container.appendChild(btn);
+    }
+
+    function startQRScanner() {
+      const readerElement = document.getElementById('reader');
+      const scannerBoxElement = document.getElementById('scannerBox');
+      const scanBtn = document.getElementById('scanBtn');
+      const stopScanBtn = document.getElementById('stopScanBtn');
+
+      readerElement.style.display = 'block';
+      scannerBoxElement.style.display = 'none';
+      scanBtn.style.display = 'none';
+      stopScanBtn.style.display = 'inline-flex';
+
+      // Supprimer le bouton fallback s'il existait
+      const oldFallback = document.getElementById('fallbackDemoBtn');
+      if (oldFallback) oldFallback.remove();
+
+      // Démarrer le timer fallback : si pas de caméra dans 3s, afficher le bouton de secours
+      if (_cameraFallbackTimer) clearTimeout(_cameraFallbackTimer);
+      _cameraFallbackTimer = setTimeout(() => {
+        // Si on est toujours en train d'essayer (reader visible mais pas de flux)
+        if (readerElement.style.display !== 'none') {
+          _showFallbackBtn();
+          showToast(
+            'Caméra non détectée',
+            'Aucun flux vidéo après 3s. Utilisez le bouton de secours ci-dessous.',
+            'amber',
+            'fa-exclamation-circle'
+          );
+        }
+      }, 3000);
+
+      if (!html5QrCode) {
+        html5QrCode = new Html5Qrcode("reader");
+      }
+
+      const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+
+      // ── Stratégie robuste : on liste d'abord les caméras disponibles ──
+      Html5Qrcode.getCameras()
+        .then(cameras => {
+          if (!cameras || cameras.length === 0) {
+            throw new Error('NotFoundError: Aucune caméra détectée sur cet appareil');
+          }
+
+          // Sur mobile : préférer la caméra arrière (environment)
+          // Sur PC/Electron : prendre la première disponible (webcam)
+          let cameraId = cameras[0].id; // défaut = première caméra
+          const backCam = cameras.find(c =>
+            /back|rear|environment|arrière/i.test(c.label)
+          );
+          if (backCam) cameraId = backCam.id;
+
+          console.log(`[PointagePro] Caméras disponibles: ${cameras.map(c => c.label).join(', ')}`);
+          console.log(`[PointagePro] Caméra sélectionnée: ${cameraId}`);
+
+          return html5QrCode.start(
+            cameraId,
+            qrConfig,
+            (decodedText) => {
+              if (decodedText.startsWith('POINTAGEPRO_TOKEN_')) {
+                clearTimeout(_cameraFallbackTimer);
+                stopQRScanner();
+                handleQRScanned(decodedText);
+              }
+            },
+            () => { /* Ignore frame errors */ }
+          );
+        })
+        .then(() => {
+          // Caméra démarrée avec succès : annuler le timer fallback
+          clearTimeout(_cameraFallbackTimer);
+          showToast('Caméra active', 'Pointez sur le QR Code pour scanner', 'green', 'fa-camera');
+        })
+        .catch(err => {
+          clearTimeout(_cameraFallbackTimer);
+          // ── Analyse précise du type d'erreur ──────────────────────────
+          let errMsg = '';
+          let errDetail = '';
+
+          if (err && err.message) {
+            errMsg = err.message;
+          } else if (typeof err === 'string') {
+            errMsg = err;
+          } else {
+            errMsg = JSON.stringify(err);
+          }
+
+          if (/NotAllowedError|PermissionDenied|Permission denied/i.test(errMsg)) {
+            errDetail = 'Permission refusée. Autorisez la caméra dans les paramètres système.';
+          } else if (/NotFoundError|DevicesNotFound|Requested device not found|Aucune caméra/i.test(errMsg)) {
+            errDetail = 'Aucune caméra trouvée sur cet appareil.';
+          } else if (/NotReadableError|Could not start video/i.test(errMsg)) {
+            errDetail = 'La caméra est déjà utilisée par une autre application.';
+          } else if (/OverconstrainedError|Overconstrained/i.test(errMsg)) {
+            errDetail = 'Contrainte de caméra non supportée (essai sans facingMode).';
+          } else {
+            errDetail = errMsg;
+          }
+
+          console.error('[PointagePro] Erreur caméra:', errMsg);
+          showToast('Erreur caméra', errDetail, 'red', 'fa-video-slash');
+
+          // Afficher immédiatement le bouton de secours
+          stopQRScanner();
+          _showFallbackBtn();
+        });
+    }
+
+    function stopQRScanner() {
+      const readerElement = document.getElementById('reader');
+      const scannerBoxElement = document.getElementById('scannerBox');
+      const scanBtn = document.getElementById('scanBtn');
+      const stopScanBtn = document.getElementById('stopScanBtn');
+
+      // Annuler le timer fallback si on arrête manuellement
+      if (_cameraFallbackTimer) {
+        clearTimeout(_cameraFallbackTimer);
+        _cameraFallbackTimer = null;
+      }
+
+      if (html5QrCode) {
+        if (html5QrCode.isScanning) {
+          html5QrCode.stop().then(() => {
+            readerElement.style.display = 'none';
+            scannerBoxElement.style.display = 'flex';
+            scanBtn.style.display = 'inline-flex';
+            stopScanBtn.style.display = 'none';
+          }).catch(err => {
+            console.error("Error stopping scanner:", err);
+            readerElement.style.display = 'none';
+            scannerBoxElement.style.display = 'flex';
+            scanBtn.style.display = 'inline-flex';
+            stopScanBtn.style.display = 'none';
+          });
+          return;
+        }
+      }
+      readerElement.style.display = 'none';
+      scannerBoxElement.style.display = 'flex';
+      scanBtn.style.display = 'inline-flex';
+      stopScanBtn.style.display = 'none';
+    }
 
     function handleQRScanned(token) {
       showToast("Scan réussi", "Récupération de la position GPS...", "green", "fa-map-marker-alt");
@@ -3083,10 +3224,10 @@
       );
     }
   </script>
-  <script src="dexie.min.js"></script>
-  <script src="qrcode.min.js"></script>
-  <!-- jsQR.js RETIRÉ — plus nécessaire avec le plugin natif Capacitor -->
-  <script src="app.js"></script>
+<script src="dexie.min.js"></script>
+<script src="qrcode.min.js"></script>
+<script src="html5-qrcode.min.js"></script>
+<script src="app.js"></script>
 </body>
 
 </html>
